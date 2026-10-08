@@ -1,0 +1,7 @@
+out/
+testResults/
+*.nupkg
+coverage.xml
+.DS_Store
+*.local.json
+.env
