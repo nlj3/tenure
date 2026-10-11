@@ -1,3 +1,24 @@
+# How long one Invoke-TenureGraph call can take at most, which bounds when a request that was sent can still land:
+# up to GraphMaxRetry retries after the first attempt, each attempt bounded by the SDK's client timeout (its default
+# ClientTimeout, Get-MgRequestContext, is 5 minutes), and a wait between attempts of at most GraphMaxRetryDelay
+# (a longer Retry-After is shortened to it).
+$script:GraphMaxRetry = 3
+$script:GraphClientTimeout = [timespan]::FromMinutes(5)
+$script:GraphMaxRetryDelay = [timespan]::FromSeconds(60)
+
+function Get-TenureGraphLongestCall {
+    <#
+    .SYNOPSIS
+        The longest one Invoke-TenureGraph call can take with its default retries: (retries + 1) client timeouts plus
+        the longest waits between them.
+    #>
+    [CmdletBinding()]
+    [OutputType([timespan])]
+    param()
+
+    [timespan]::FromTicks($script:GraphClientTimeout.Ticks * ($script:GraphMaxRetry + 1) + $script:GraphMaxRetryDelay.Ticks * $script:GraphMaxRetry)
+}
+
 function Invoke-TenureGraphRaw {
     <#
     .SYNOPSIS
@@ -16,6 +37,10 @@ function Invoke-TenureGraphRaw {
         [hashtable]$Headers
     )
 
+    # The SDK writes full request and response bodies to the Debug stream. For user
+    # creation, password reset and Temporary Access Pass that body is the secret, so
+    # Debug is forced off here whatever the caller or the session preference says.
+    $DebugPreference = 'SilentlyContinue'
     $statusCode = 0
     $responseHeaders = @{}
     $parameters = @{
@@ -26,6 +51,7 @@ function Invoke-TenureGraphRaw {
         StatusCodeVariable      = 'statusCode'
         ResponseHeadersVariable = 'responseHeaders'
         ErrorAction             = 'Stop'
+        Debug                   = $false
     }
     if ($Headers) { $parameters.Headers = $Headers }
     if ($null -ne $Body -and $Body.Length -gt 0) {
@@ -70,7 +96,7 @@ function Invoke-TenureGraph {
         [hashtable]$Headers,
 
         [ValidateRange(0, 10)]
-        [int]$MaxRetry = 3
+        [int]$MaxRetry = $script:GraphMaxRetry
     )
 
     Assert-TenureConnection -Backend Graph
@@ -104,6 +130,8 @@ function Invoke-TenureGraph {
             $retryAfter = $null
             if ($raw.Headers -and $raw.Headers.Contains('Retry-After')) { $retryAfter = @($raw.Headers['Retry-After'])[0] }
             if ($retryAfter -and [int]::TryParse([string]$retryAfter, [ref]$delay)) { $delay = [math]::Max(1, $delay) }
+            # Bounded, so a request that was sent has a latest time to land (Get-TenureGraphLongestCall).
+            $delay = [math]::Min($delay, $script:GraphMaxRetryDelay.TotalSeconds)
             Write-Verbose ("Graph {0} {1}: status {2}, retry {3}/{4} after {5} s" -f $Method, $next, $raw.Status, $attempt, $MaxRetry, $delay)
             Start-Sleep -Seconds $delay
         }
