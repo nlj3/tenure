@@ -1,3 +1,6 @@
+# The kinds of object a step can act on (SPEC section 2.3). Each provider declares one of them as its TargetKind.
+$script:TargetKinds = [string[]]@('user', 'group', 'device', 'mailbox', 'drive', 'role')
+
 function Register-TenureProvider {
     <#
     .SYNOPSIS
@@ -44,8 +47,29 @@ function Register-TenureProvider {
     $severity = & $get 'Severity'
     if ($kind -eq 'Check' -and $severity -notin 'Warn', 'Refuse') { $problems.Add("Check providers need Severity Warn or Refuse (got '$severity').") }
     if ($kind -ne 'Check' -and $null -ne $severity) { $problems.Add('Severity is only valid for Check providers.') }
+    # Repeatable: firing the Invoke twice does no harm, so a resumed run may fire it again when an earlier
+    # attempt left no record of its outcome. Absent means $false.
+    $repeatable = & $get 'Repeatable'
+    if ($null -ne $repeatable -and -not ($repeatable -is [bool])) { $problems.Add('Repeatable must be a [bool].') }
+    if ($kind -ne 'Invoke' -and $repeatable -eq $true) { $problems.Add('Repeatable is only valid for Invoke providers.') }
+    # TargetKind: the one kind of object the provider acts on. The engine reads Target.Id as that kind, whatever a
+    # plan's Target.Kind label says, and refuses a step whose label disagrees.
+    $targetKind = & $get 'TargetKind'
+    if ($targetKind -isnot [string] -or $script:TargetKinds -cnotcontains $targetKind) { $problems.Add(("TargetKind must be one of {0} (got '{1}')." -f ($script:TargetKinds -join ', '), $targetKind)) }
+    # Actions: the step actions the provider allows. A plan step with any other Action is refused.
+    $actions = @(& $get 'Actions')
+    $actionChoices = switch ($kind) { 'Check' { @('Check', 'NoOp') } 'Invoke' { @('Invoke') } default { @('Create', 'Update', 'Remove', 'NoOp') } }
+    if ($actions.Count -eq 0 -or @($actions | Where-Object { $_ -isnot [string] -or $actionChoices -cnotcontains $_ }).Count -gt 0) {
+        $problems.Add(("Actions must list one or more of {0} for Kind '{1}'." -f ($actionChoices -join ', '), $kind))
+    }
+    # AffectedBy (Check only, required there, may be empty): providers whose steps change what the check reads. On
+    # a later run, a check whose input this plan's own step changed is re-evaluated instead of drift-checked.
+    $affectedBy = @(& $get 'AffectedBy' | Where-Object { $null -ne $_ })
+    if ($kind -ne 'Check' -and $affectedBy.Count -gt 0) { $problems.Add('AffectedBy is only valid for Check providers.') }
+    if ($kind -eq 'Check' -and -not $Definition.ContainsKey('AffectedBy')) { $problems.Add('Check providers must declare AffectedBy (an empty list when no provider changes what they read).') }
+    if (@($affectedBy | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^[A-Z][A-Za-z]+\.[A-Z][A-Za-z]+$' }).Count -gt 0) { $problems.Add("AffectedBy must list provider names ('Area.Resource').") }
 
-    $allowedKeys = 'Name', 'Kind', 'Backend', 'Scopes', 'Risk', 'Reversible', 'Get', 'Test', 'Set', 'Describe', 'Severity', 'Description'
+    $allowedKeys = 'Name', 'Kind', 'Backend', 'Scopes', 'Risk', 'Reversible', 'Repeatable', 'TargetKind', 'Actions', 'AffectedBy', 'Get', 'Test', 'Set', 'Describe', 'Severity', 'Description'
     foreach ($key in $Definition.Keys) {
         if ($key -notin $allowedKeys) { $problems.Add("Unknown key '$key'.") }
     }
@@ -65,6 +89,10 @@ function Register-TenureProvider {
         Scopes      = @($scopes)
         Risk        = $risk
         Reversible  = $reversible
+        Repeatable  = ($repeatable -eq $true)
+        TargetKind  = $targetKind
+        Actions     = [string[]]$actions
+        AffectedBy  = [string[]]$affectedBy
         Severity    = $severity
         Description = [string](& $get 'Description')
         Get         = & $get 'Get'

@@ -1,6 +1,7 @@
 # ADR-0003: append-only JSONL audit log with a SHA-256 hash chain
 
-**Date:** 2026-10-08  ·  **Status:** accepted
+Date: 2026-10-08
+Status: accepted
 
 ## Context
 The audit log answers "who changed what, when, from which plan". It is also the
@@ -24,5 +25,17 @@ snapshots that exclude credential fields by construction.
 - Hard: concurrent writers from two shells would race; one writer per file assumed
   (documented), with a lock file as a later option.
 
+## Amendment 2026-10-08
+- Line format fixed as: canonical JSON without `Hash`, then `,"Hash":"<hex>"` as the last member;
+  the verifier re-hashes the stored text rather than re-serializing (ConvertFrom-Json would
+  turn date-like strings into dates and `1.50` into `1.5`, producing false tamper reports).
+- `Note` field added to every entry so Skipped, Drifted and Refused outcomes say why.
+- Writer locks the file exclusively (FileShare.None) with a ~2 s retry; .NET append mode does
+  not use O_APPEND on Unix, so a lock is the only real protection. Multi-writer is therefore
+  supported on one host; the "one writer per file" caveat above is withdrawn.
+- A torn or garbage last line makes the writer throw `Tenure.Audit.Corrupt` instead of chaining
+  onto it. Readers skip blank lines, strip a BOM and accept CRLF.
+
 ## Revisit when
-A consumer needs non-repudiation (then sign entries) or multi-writer use.
+A consumer needs non-repudiation (then sign entries), or the audit directory must be
+created with restricted permissions on every OS (needs .NET 7+ / PowerShell 7.3+).

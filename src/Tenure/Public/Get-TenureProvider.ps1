@@ -13,6 +13,16 @@ function Get-TenureProvider {
         Get-TenureProvider | Format-Table Name, Kind, Backend, Risk, Reversible
     .EXAMPLE
         Get-TenureProvider -Name 'Device.*' | Select-Object Name, Scopes
+    .EXAMPLE
+        Get-TenureProvider | Format-Table Name, TargetKind, Actions, AffectedBy
+
+        Shows the kind of object each provider acts on, the step actions it allows, and for a
+        check the providers whose steps change what it reads.
+    .EXAMPLE
+        Get-TenureProvider | Where-Object Repeatable | Select-Object Name
+
+        Lists the Invoke providers that are safe to fire twice, which a resumed run may run
+        again when an earlier attempt left no record of its outcome.
     .OUTPUTS
         Tenure.Provider
     #>
