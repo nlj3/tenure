@@ -1,5 +1,6 @@
 @{
     RootModule           = 'Tenure.psm1'
+    FormatsToProcess     = @('Formats/Tenure.Format.ps1xml')
     ModuleVersion        = '0.1.0'
     CompatiblePSEditions = @('Core')
     GUID                 = 'a7b4344c-6ff0-4bd4-995a-b18b04872149'
@@ -13,7 +14,26 @@
         @{ ModuleName = 'ExchangeOnlineManagement'; ModuleVersion = '3.4.0' }
     )
     FunctionsToExport    = @(
+        'Connect-Tenure'
+        'Disconnect-Tenure'
+        'Export-TenurePlan'
+        'Get-TenureApplyResult'
+        'Get-TenureAudit'
+        'Get-TenureConnection'
+        'Get-TenurePolicy'
         'Get-TenureProvider'
+        'Import-TenurePlan'
+        'Invoke-TenurePlan'
+        'New-TenureOffboardPlan'
+        'New-TenureOnboardPlan'
+        'New-TenurePlan'
+        'New-TenurePolicy'
+        'New-TenureRoleChangePlan'
+        'New-TenureStep'
+        'Show-TenurePlan'
+        'Test-TenureAudit'
+        'Test-TenurePlan'
+        'Test-TenurePolicy'
     )
     CmdletsToExport      = @()
     VariablesToExport    = @()

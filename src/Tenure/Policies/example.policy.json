@@ -1,0 +1,57 @@
+{
+  "_comment": "Example Tenure policy. Group and license names are resolved to ids when a plan is built, not when this file is loaded, so a misspelled name shows up at plan time. Keys that start with an underscore are ignored. Replace example.com and the roles with your own.",
+  "version": 1,
+  "tenant": {
+    "domain": "example.com"
+  },
+  "defaults": {
+    "usageLocation": "US",
+    "passwordLength": 20,
+    "protectedUsers": [
+      "breakglass@example.com"
+    ],
+    "offboard": {
+      "resetPassword": true,
+      "revokeSessions": true,
+      "removeDirectoryRoles": true,
+      "convertMailboxToShared": true,
+      "hideFromAddressLists": true,
+      "forwardTo": "manager",
+      "deliverToMailboxAndForward": true,
+      "autoReply": {
+        "enabled": true,
+        "message": "{displayName} has left {company}. Please contact {managerDisplayName} ({managerMail})."
+      },
+      "grantMailboxTo": "manager",
+      "grantOneDriveTo": "manager",
+      "cancelMeetings": true,
+      "removeFromGroups": true,
+      "keepGroups": [],
+      "removeLicenses": true,
+      "devices": "wipeCorporateRetirePersonal",
+      "setEmployeeLeaveDate": false
+    }
+  },
+  "roles": {
+    "sales": {
+      "licenses": [
+        "SPE_E3"
+      ],
+      "groups": [
+        "sales@example.com",
+        "All Staff"
+      ],
+      "department": "Sales"
+    },
+    "warehouse": {
+      "licenses": [
+        "EXCHANGEDESKLESS"
+      ],
+      "groups": [
+        "Warehouse Users"
+      ],
+      "department": "Operations",
+      "jobTitle": "Warehouse Associate"
+    }
+  }
+}

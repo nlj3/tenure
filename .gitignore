@@ -5,3 +5,6 @@ coverage.xml
 .DS_Store
 *.local.json
 .env
+# Output of live runs against a real tenant never enters the repo.
+.tenure/
+live/

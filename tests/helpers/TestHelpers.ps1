@@ -42,7 +42,10 @@ function New-FakeProviderDefinition {
         A valid provider definition backed by an in-memory state hashtable.
     .DESCRIPTION
         $State is keyed by Target.Id and holds the "current" object. Set writes Desired
-        into it. Use -Overrides to replace any key (for example Kind, Risk, Set).
+        into it. Use -Overrides to replace any key (for example Kind, Risk, Set, TargetKind).
+        TargetKind defaults to 'user'. Actions, unless overridden, are every action the
+        final Kind allows, so a fake does not limit what a test labels its steps. A Check
+        fake declares an empty AffectedBy unless overridden.
     #>
     param(
         [string]$Name = 'Fake.State',
@@ -56,6 +59,7 @@ function New-FakeProviderDefinition {
         Scopes     = @('Fake.ReadWrite.All')
         Risk       = 'Low'
         Reversible = $true
+        TargetKind = 'user'
         Get        = {
             param($Target, $Context)
             if (-not $State.ContainsKey($Target.Id)) {
@@ -80,10 +84,16 @@ function New-FakeProviderDefinition {
         }.GetNewClosure()
         Describe   = {
             param($Target, $Current, $Desired, $Action)
-            "$Action $($Target.Name): " + (($Desired.Keys | Sort-Object | ForEach-Object { "$_=$($Desired[$_])" }) -join ', ')
+            # Null-safe: Invoke steps may carry no Desired, and the gate runs under strict mode.
+            $detail = if ($Desired -is [System.Collections.IDictionary]) { ($Desired.Keys | Sort-Object | ForEach-Object { "$_=$($Desired[$_])" }) -join ', ' } else { '' }
+            "$Action $($Target.Name): $detail"
         }
     }
     foreach ($key in $Overrides.Keys) { $definition[$key] = $Overrides[$key] }
+    if (-not $Overrides.ContainsKey('Actions')) {
+        $definition['Actions'] = switch ($definition['Kind']) { 'Check' { @('Check', 'NoOp') } 'Invoke' { @('Invoke') } default { @('Create', 'Update', 'Remove', 'NoOp') } }
+    }
+    if ($definition['Kind'] -eq 'Check' -and -not $definition.ContainsKey('AffectedBy')) { $definition['AffectedBy'] = @() }
     $definition
 }
 

@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Tenure policy",
+  "description": "Policy file for the Tenure PowerShell module (docs/SPEC.md section 2.1). Editors use this file for completion and validation. The module validates on load with its own checks, which follow the same rules. Keys that start with an underscore (for example _comment) are ignored everywhere.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "version": {
+      "description": "Policy schema version. Must be 1.",
+      "type": "integer",
+      "const": 1
+    },
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "domain": {
+          "description": "UPN suffix for new users, for example example.com.",
+          "type": "string"
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "usageLocation": {
+          "description": "Two-letter usage location set on new users. Default US.",
+          "type": "string"
+        },
+        "passwordLength": {
+          "description": "Length of generated passwords, 8 to 256. Default 20.",
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 256
+        },
+        "protectedUsers": {
+          "description": "Accounts a plan refuses to act on (break-glass accounts).",
+          "$ref": "#/definitions/nonEmptyStringArray"
+        },
+        "offboard": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": {}
+          },
+          "properties": {
+            "resetPassword": { "type": "boolean" },
+            "revokeSessions": { "type": "boolean" },
+            "removeDirectoryRoles": { "type": "boolean" },
+            "convertMailboxToShared": { "type": "boolean" },
+            "hideFromAddressLists": { "type": "boolean" },
+            "forwardTo": { "$ref": "#/definitions/managerNoneOrAddress" },
+            "deliverToMailboxAndForward": { "type": "boolean" },
+            "autoReply": {
+              "type": "object",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": {}
+              },
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "message": {
+                  "description": "Template. Placeholders are filled when the plan is built.",
+                  "type": "string"
+                }
+              }
+            },
+            "grantMailboxTo": { "$ref": "#/definitions/managerNoneOrAddress" },
+            "grantOneDriveTo": { "$ref": "#/definitions/managerNoneOrAddress" },
+            "cancelMeetings": { "type": "boolean" },
+            "removeFromGroups": { "type": "boolean" },
+            "keepGroups": {
+              "description": "Names, mail addresses or ids of groups that are never removed.",
+              "$ref": "#/definitions/nonEmptyStringArray"
+            },
+            "removeLicenses": { "type": "boolean" },
+            "devices": {
+              "type": "string",
+              "enum": ["wipeCorporateRetirePersonal", "retireAll", "none"]
+            },
+            "setEmployeeLeaveDate": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "roles": {
+      "description": "Role templates by name. May be empty. Names match ^[A-Za-z0-9_-]+$ and cannot start with an underscore (those keys are comments).",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {},
+        "^[A-Za-z0-9-][A-Za-z0-9_-]*$": { "$ref": "#/definitions/role" }
+      }
+    }
+  },
+  "definitions": {
+    "nonEmptyStringArray": {
+      "description": "Strings that contain at least one character other than whitespace.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "\\S" }
+    },
+    "managerNoneOrAddress": {
+      "description": "The literal manager, the literal none, or a mail address.",
+      "type": "string",
+      "pattern": "^(manager|none|[^@\\s]+@[^@\\s]+\\.[^@\\s]+)$"
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "licenses": {
+          "description": "SKU part numbers, for example SPE_E3.",
+          "$ref": "#/definitions/nonEmptyStringArray"
+        },
+        "groups": {
+          "description": "Group display names, mail addresses or object ids.",
+          "$ref": "#/definitions/nonEmptyStringArray"
+        },
+        "department": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "manager": {
+          "description": "Default manager (user principal name) for users onboarded into this role.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

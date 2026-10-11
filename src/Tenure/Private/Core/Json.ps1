@@ -49,14 +49,19 @@ function ConvertTo-TenureCanonical {
         return , $list.ToArray()
     }
 
-    # PSCustomObject and other objects: project their properties.
-    $properties = @($InputObject.PSObject.Properties | Where-Object { $_.MemberType -in 'NoteProperty', 'Property', 'AliasProperty', 'ScriptProperty' })
-    $names = @($properties | ForEach-Object { [string]$_.Name })
+    # PSCustomObject and other objects: project their properties. Property names are unique ignoring case, so a
+    # name maps to exactly one property; look it up in a table instead of scanning the list for every name.
+    $byName = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    foreach ($property in $InputObject.PSObject.Properties) {
+        if ($property.MemberType -notin 'NoteProperty', 'Property', 'AliasProperty', 'ScriptProperty') { continue }
+        $name = [string]$property.Name
+        if (-not $byName.ContainsKey($name)) { $byName[$name] = $property.Value }
+    }
+    $names = [string[]]@($byName.Keys)
     [array]::Sort($names, [System.StringComparer]::Ordinal)
     $ordered = [System.Collections.Specialized.OrderedDictionary]::new([System.StringComparer]::Ordinal)
     foreach ($name in $names) {
-        $value = ($properties | Where-Object Name -eq $name | Select-Object -First 1).Value
-        $ordered[$name] = ConvertTo-TenureCanonical -InputObject $value -Depth ($Depth + 1)
+        $ordered[$name] = ConvertTo-TenureCanonical -InputObject $byName[$name] -Depth ($Depth + 1)
     }
     return $ordered
 }

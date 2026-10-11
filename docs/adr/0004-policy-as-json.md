@@ -1,6 +1,7 @@
 # ADR-0004: policy file is JSON with a published schema
 
-**Date:** 2026-10-08  ·  **Status:** accepted
+Date: 2026-10-08
+Status: accepted
 
 ## Context
 Role templates (which licenses and groups a role gets) and offboarding defaults are
@@ -16,11 +17,11 @@ tool to generate.
 
 ## Decision
 JSON, validated on load by a small in-module validator (no dependency) and shipped
-with `policies/tenure.policy.schema.json` for editors. Group and license references
+with `src/Tenure/Policies/tenure.policy.schema.json` for editors. Group and license references
 are names resolved to ids at plan time; the plan carries the resolved ids.
 
 ## Consequences
-- Easy: a kiosk-mailbox tool can write a policy and call the same verbs.
+- Easy: another tool can write a policy and call the same verbs.
 - Hard: typos in group names surface at plan time, not load time (by design, since
   resolution needs a tenant).
 
