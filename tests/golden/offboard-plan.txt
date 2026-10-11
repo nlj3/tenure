@@ -1,0 +1,20 @@
+Plan 3f9c1a2b: Offboard alice@example.com (Alice Example)
+Created 2026-10-08 12:30 UTC by admin@example.com with Tenure 0.1.0, policy a1b2c3d4
+Status Planned. 8 steps: 5 changes, 1 no-op, 1 check, 1 destructive.
+
+  ~ S01 Show.SignIn                   alice@example.com    enabled: true -> false
+  ! S02 Show.Sessions                 alice@example.com    revoke all sign-in sessions
+  ~ S03 Show.MailboxType              alice@example.com    Regular -> Shared
+  - S04 Show.GroupMember              Sales                remove alice@example.com
+  + S05 Show.AutoReply                alice@example.com    set automatic reply: Alice has left Example Corp. For urgent
+                                                           matters contact bob@example.com or call the front desk on
+                                                           555-0100.
+  x S06 Show.DeviceWipe               LAPTOP-01 (company)  wipe, irreversible
+  = S07 Show.MailboxHidden            alice@example.com    already hidden
+  ? S08 Show.CheckMailboxEligibility  alice@example.com    check failed: 61 GB (warn)
+
+Depends: S02 -> S01
+Warnings:
+  - Mailbox is 61 GB; shared mailboxes over 50 GB need an Exchange Online license.
+Destructive: S06 Show.DeviceWipe. Needs an interactive -Confirm or -AllowDestructive.
+Legend: + create  ~ update  - remove  ! invoke  x destructive  = no-op  ? check

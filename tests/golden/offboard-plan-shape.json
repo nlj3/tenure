@@ -1,0 +1,23 @@
+[
+  { "provider": "Check.SubjectAllowed", "action": "NoOp", "targetKind": "user", "targetName": "alice@example.com", "key": "subject", "dependsOn": [], "risk": "Low" },
+  { "provider": "Check.SubjectNotGlobalAdmin", "action": "NoOp", "targetKind": "user", "targetName": "alice@example.com", "key": "ga", "dependsOn": [], "risk": "Low" },
+  { "provider": "User.SignIn", "action": "Update", "targetKind": "user", "targetName": "alice@example.com", "key": "signin", "dependsOn": [], "risk": "High" },
+  { "provider": "User.Password", "action": "Invoke", "targetKind": "user", "targetName": "alice@example.com", "key": "password", "dependsOn": [], "risk": "High" },
+  { "provider": "User.Sessions", "action": "Invoke", "targetKind": "user", "targetName": "alice@example.com", "key": "sessions", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Check.MailboxSharedEligibility", "action": "NoOp", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "eligibility", "dependsOn": [], "risk": "Low" },
+  { "provider": "Mailbox.Type", "action": "Update", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "mailboxType", "dependsOn": [], "risk": "High" },
+  { "provider": "Mailbox.Forwarding", "action": "Update", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "forwarding", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Mailbox.AutoReply", "action": "Update", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "autoreply", "dependsOn": [], "risk": "Low" },
+  { "provider": "Mailbox.Delegate", "action": "Update", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "delegate", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Mailbox.Hidden", "action": "Update", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "hidden", "dependsOn": [], "risk": "Low" },
+  { "provider": "Calendar.CancelMeetings", "action": "Invoke", "targetKind": "mailbox", "targetName": "alice@example.com", "key": "calendar", "dependsOn": [], "risk": "Destructive" },
+  { "provider": "OneDrive.Access", "action": "Update", "targetKind": "drive", "targetName": "alice@example.com", "key": "onedrive", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Group.Member", "action": "Update", "targetKind": "group", "targetName": "All Staff", "key": "group:AllStaffGroup", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Group.Member", "action": "NoOp", "targetKind": "group", "targetName": "Everyone Dynamic", "key": "group:DynamicGroup", "dependsOn": [], "risk": "Medium" },
+  { "provider": "DistributionGroup.Member", "action": "Update", "targetKind": "group", "targetName": "Legal DL", "key": "group:LegalDlGroup", "dependsOn": [], "risk": "Medium" },
+  { "provider": "Group.Member", "action": "Update", "targetKind": "group", "targetName": "Sales", "key": "group:SalesGroup", "dependsOn": [], "risk": "Medium" },
+  { "provider": "User.Licenses", "action": "Update", "targetKind": "user", "targetName": "alice@example.com", "key": "licenses", "dependsOn": [ "mailboxType" ], "risk": "High" },
+  { "provider": "Device.Wipe", "action": "Invoke", "targetKind": "device", "targetName": "ALICE-LAPTOP (company)", "key": "device:CompanyDevice", "dependsOn": [], "risk": "Destructive" },
+  { "provider": "Device.Retire", "action": "Invoke", "targetKind": "device", "targetName": "ALICE-PHONE (personal)", "key": "device:PersonalDevice", "dependsOn": [], "risk": "High" },
+  { "provider": "Device.Retire", "action": "Invoke", "targetKind": "device", "targetName": "ALICE-TABLET (unknown)", "key": "device:UnknownDevice", "dependsOn": [], "risk": "High" }
+]

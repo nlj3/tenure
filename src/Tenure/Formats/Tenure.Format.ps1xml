@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Table views for the Tenure object types. Loaded by the module manifest (FormatsToProcess).
+
+  Script block columns reach into nested values (Target.Name, Subject.UserPrincipalName,
+  Plan.Status, Summary.*). They run in the caller's session, not in the module, so they must
+  not assume strict mode is off and must cope with a missing or null nested value: a hashtable
+  is read through its indexer, any other object through PSObject.Properties, and an absent
+  value prints as an empty cell.
+-->
+<Configuration>
+  <ViewDefinitions>
+
+    <View>
+      <Name>Tenure.Step</Name>
+      <ViewSelectedBy>
+        <TypeName>Tenure.Step</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Id</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Action</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Provider</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Target</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Risk</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Status</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Id</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Action</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Provider</PropertyName></TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$t = $_.Target
+if ($t -is [System.Collections.IDictionary]) { $t['Name'] }
+elseif ($null -ne $t) { $p = $t.PSObject.Properties['Name']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem><PropertyName>Risk</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Status</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+    <View>
+      <Name>Tenure.Plan</Name>
+      <ViewSelectedBy>
+        <TypeName>Tenure.Plan</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Plan</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Operation</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Subject</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Steps</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Status</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$id = [string]$_.PlanId
+if ($id.Length -gt 8) { $id.Substring(0, 8) } else { $id }
+]]></ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem><PropertyName>Operation</PropertyName></TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Subject
+if ($s -is [System.Collections.IDictionary]) { $s['UserPrincipalName'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['UserPrincipalName']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+if ($null -eq $_.Steps) { 0 } else { @($_.Steps).Count }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem><PropertyName>Status</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+    <View>
+      <Name>Tenure.AuditEntry</Name>
+      <ViewSelectedBy>
+        <TypeName>Tenure.AuditEntry</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Seq</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Ts</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Outcome</Label></TableColumnHeader>
+          <TableColumnHeader><Label>StepId</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Provider</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Target</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>Seq</PropertyName>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem><PropertyName>Ts</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Outcome</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>StepId</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Provider</PropertyName></TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$t = $_.Target
+if ($t -is [System.Collections.IDictionary]) { $t['Name'] }
+elseif ($null -ne $t) { $p = $t.PSObject.Properties['Name']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+    <View>
+      <Name>Tenure.Provider</Name>
+      <ViewSelectedBy>
+        <TypeName>Tenure.Provider</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Name</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Kind</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Backend</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Risk</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Reversible</Label></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Kind</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Backend</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Risk</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Reversible</PropertyName></TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+    <View>
+      <Name>Tenure.ApplyResult</Name>
+      <ViewSelectedBy>
+        <TypeName>Tenure.ApplyResult</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Status</Label></TableColumnHeader>
+          <TableColumnHeader><Label>Applied</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Skipped</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Failed</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>DryRun</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Drifted</Label><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Refused</Label><Alignment>Right</Alignment></TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$p = $_.Plan
+if ($p -is [System.Collections.IDictionary]) { $p['Status'] }
+elseif ($null -ne $p) { $q = $p.PSObject.Properties['Status']; if ($null -ne $q) { $q.Value } }
+]]></ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['Applied'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['Applied']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['Skipped'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['Skipped']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['Failed'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['Failed']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['DryRun'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['DryRun']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['Drifted'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['Drifted']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock><![CDATA[
+$s = $_.Summary
+if ($s -is [System.Collections.IDictionary]) { $s['Refused'] }
+elseif ($null -ne $s) { $p = $s.PSObject.Properties['Refused']; if ($null -ne $p) { $p.Value } }
+]]></ScriptBlock>
+                <Alignment>Right</Alignment>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
+  </ViewDefinitions>
+</Configuration>
