@@ -1,0 +1,128 @@
+name: Release
+
+# Publishes to the PowerShell Gallery when a GitHub release is published from a tag
+# like v1.2.3 or v1.2.3-beta1. A workflow_dispatch run packs without publishing so
+# the pipeline can be rehearsed. Requires the repository secret PSGALLERY_API_KEY and
+# a protected environment named "psgallery" (add required reviewers there to get a
+# manual approval step in front of every publish).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rehearse (for example 1.2.3 or 1.2.3-beta1). Nothing is published.'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Test and pack
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tag name and the input are user-controlled text: they reach the script through environment
+      # variables, never pasted into the script source, so a crafted tag cannot inject commands.
+      - name: Resolve version from tag or input
+        id: version
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          $raw = if ($env:EVENT_NAME -eq 'release') { $env:TAG_NAME } else { $env:INPUT_VERSION }
+          $raw = ([string]$raw).Trim().TrimStart('v')
+          if ($raw -notmatch '^(?<v>\d+\.\d+\.\d+)(?:-(?<p>[A-Za-z0-9]+))?$') {
+            throw "Tag or input '$raw' is not SemVer with an optional alphanumeric prerelease label (the Gallery allows only [A-Za-z0-9] there)."
+          }
+          $floor = (Import-PowerShellDataFile ./src/Tenure/Tenure.psd1).ModuleVersion
+          if ([version]$Matches.v -lt [version]$floor) { throw "Version $($Matches.v) is below the source manifest version $floor." }
+          "version=$($Matches.v)" >> $env:GITHUB_OUTPUT
+          "prerelease=$($Matches.p)" >> $env:GITHUB_OUTPUT
+          Write-Host "Building Tenure $($Matches.v) $($Matches.p)"
+
+      - name: Bootstrap dependencies
+        shell: pwsh
+        run: ./build.ps1 -Task Bootstrap
+
+      - name: Analyze and test
+        shell: pwsh
+        run: ./build.ps1 -Task Analyze; ./build.ps1 -Task Test
+
+      - name: Build versioned module
+        shell: pwsh
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+          BUILD_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: ./build.ps1 -Task Build -Version $env:BUILD_VERSION -Prerelease $env:BUILD_PRERELEASE
+
+      - name: Pack to a local repository (rehearsal of Publish-Module)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path ./pkg -Force | Out-Null
+          Register-PSRepository -Name TenureLocal -SourceLocation (Resolve-Path ./pkg) -PublishLocation (Resolve-Path ./pkg) -InstallationPolicy Trusted
+          Publish-Module -Path ./out/Tenure -Repository TenureLocal -NuGetApiKey 'rehearsal'
+          Get-ChildItem ./pkg
+
+      - name: Upload module and package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenure-${{ steps.version.outputs.version }}
+          path: |
+            out/Tenure
+            pkg/*.nupkg
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PowerShell Gallery
+    needs: package
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: psgallery
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download built module
+        uses: actions/download-artifact@v4
+        with:
+          name: tenure-${{ needs.package.outputs.version }}
+          path: .
+
+      - name: Bootstrap dependencies (Publish-Module validates RequiredModules locally)
+        shell: pwsh
+        run: ./build.ps1 -Task Bootstrap
+
+      - name: Verify the built manifest matches the release tag
+        shell: pwsh
+        env:
+          EXPECTED_VERSION: ${{ needs.package.outputs.version }}
+          EXPECTED_PRERELEASE: ${{ needs.package.outputs.prerelease }}
+        run: |
+          $manifest = Test-ModuleManifest -Path ./out/Tenure/Tenure.psd1
+          if ("$($manifest.Version)" -ne $env:EXPECTED_VERSION) { throw "Built version $($manifest.Version) does not match tag version $env:EXPECTED_VERSION." }
+          $pre = $manifest.PrivateData.PSData.Prerelease
+          if ("$pre" -ne "$env:EXPECTED_PRERELEASE") { throw "Built prerelease '$pre' does not match tag prerelease '$env:EXPECTED_PRERELEASE'." }
+
+      - name: Publish
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          if (-not $env:PSGALLERY_API_KEY) { throw 'Secret PSGALLERY_API_KEY is not set.' }
+          Publish-Module -Path ./out/Tenure -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
+
+      - name: Attach package to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG_NAME" pkg/*.nupkg --clobber

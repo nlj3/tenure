@@ -47,6 +47,10 @@ any of those, it is an integration test: put it in `tests/integration/` with the
    contracts. Mock the seams, not the SDK, except in the seam tests themselves.
 8. **Releases are cut by the maintainer.** Do not tag, publish, or create releases
    from a branch.
+9. **Providers declare what they act on.** Every provider declares `TargetKind` and
+   `Actions`, and every check also declares `AffectedBy`; registration refuses a provider
+   without them, and the plan shape check refuses a step whose `Target.Kind` or `Action`
+   its provider does not declare.
 
 ## Conventions
 

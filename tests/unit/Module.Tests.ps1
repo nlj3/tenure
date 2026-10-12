@@ -44,3 +44,28 @@ Describe 'Tenure module' {
         @($manifest.RequiredModules | ForEach-Object { $_.ModuleName } | Sort-Object) | Should -Be @('ExchangeOnlineManagement', 'Microsoft.Graph.Authentication')
     }
 }
+
+Describe 'Release workflow' {
+    It 'passes the tag name and other event values to scripts through environment variables, never pasted into the script text' {
+        $path = Join-Path $script:TenureRepoRoot '.github' 'workflows' 'release.yml'
+        $lines = Get-Content -LiteralPath $path
+        $inRun = $false
+        $runIndent = 0
+        $offenders = [System.Collections.Generic.List[string]]::new()
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            $indent = $line.Length - $line.TrimStart().Length
+            if ($line -match '^\s*(-\s+)?run:\s*(.*)$') {
+                $inRun = $true
+                $runIndent = $indent
+                if ($Matches[2] -and $Matches[2] -ne '|' -and $Matches[2].Contains('${{')) { $offenders.Add("line $($i + 1): $line") }
+                continue
+            }
+            if ($inRun -and $line.Trim().Length -gt 0 -and $indent -le $runIndent) { $inRun = $false }
+            if ($inRun -and $line.Contains('${{')) { $offenders.Add("line $($i + 1): $line") }
+        }
+        $offenders | Should -BeNullOrEmpty -Because 'a value expanded into the script text can inject commands'
+        (Get-Content -LiteralPath $path -Raw) | Should -Match 'TAG_NAME: \$\{\{ github\.event\.release\.tag_name \}\}'
+    }
+}
+

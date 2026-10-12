@@ -1,6 +1,7 @@
 # ADR-0005: PowerShell 7.2+, two required modules, Pester 5
 
-**Date:** 2026-10-08  ·  **Status:** accepted
+Date: 2026-10-08
+Status: accepted
 
 ## Context
 The module must install and run on a technician's Mac, an Ubuntu CI runner and a
@@ -20,5 +21,5 @@ Windows admin box.
   site-collection-admin delegation is documented as a manual alternative).
 
 ## Revisit when
-Pester 6 stabilises and the ecosystem moves, or Microsoft ships OneDrive admin
+Pester 6 stabilizes and the ecosystem moves, or Microsoft ships OneDrive admin
 delegation in Graph v1.0.

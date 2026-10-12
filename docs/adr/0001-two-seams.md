@@ -1,6 +1,7 @@
 # ADR-0001: all tenant access through two seams
 
-**Date:** 2026-10-08  ·  **Status:** accepted
+Date: 2026-10-08
+Status: accepted
 
 ## Context
 The module must be unit-testable with no tenant, and must run on macOS, Linux and
@@ -21,7 +22,7 @@ references an SDK command.
 
 ## Consequences
 - Easy: mocking, CI on three OSes, small install.
-- Hard: providers must know Graph URLs and payloads; reviewers check them against docs.
+- Hard: providers must know Graph URLs and payloads, and each one has to be checked against the Graph documentation.
 - Reversal cost: low per provider, high across the registry.
 
 ## Revisit when

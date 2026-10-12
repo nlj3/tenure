@@ -1,6 +1,7 @@
 # Spike 0001: do the two seams load on macOS without a tenant?
 
-**Date:** 2026-10-08  ·  **Timebox:** 10 minutes  ·  **Verdict:** GO
+Date: 2026-10-08
+Status: done, verdict GO (timebox 10 minutes)
 
 ## Method
 On macOS (Darwin 27, arm64, PowerShell 7.5.4), import the two dependency modules
