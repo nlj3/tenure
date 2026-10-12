@@ -84,12 +84,21 @@ Describe 'Invoke-TenureGraph' {
         { Invoke-Graph @{ Method = 'GET'; Uri = 'me' } } | Should -Throw -ErrorId 'Tenure.Graph.Failed'
     }
 
-    It 'retries a 429 honouring Retry-After, then succeeds' {
+    It 'retries a 429 honoring Retry-After, then succeeds' {
         Enqueue 429 ([pscustomobject]@{ error = [pscustomobject]@{ code = 'TooManyRequests'; message = 'slow down' } }) @{ 'Retry-After' = @('7') }
         Enqueue 200 ([pscustomobject]@{ id = 'ok' })
         (Invoke-Graph @{ Method = 'GET'; Uri = 'me' }).id | Should -Be 'ok'
         $global:TenureSleeps | Should -Be @(7)
         $global:TenureGraphCalls.Count | Should -Be 2
+    }
+
+    It 'waits at most 60 s however long Retry-After asks for, so a call has a latest time to land' {
+        Enqueue 429 ([pscustomobject]@{ error = [pscustomobject]@{ code = 'TooManyRequests'; message = 'slow down' } }) @{ 'Retry-After' = @('3600') }
+        Enqueue 200 ([pscustomobject]@{ id = 'ok' })
+        (Invoke-Graph @{ Method = 'GET'; Uri = 'me' }).id | Should -Be 'ok'
+        $global:TenureSleeps | Should -Be @(60)
+        # Four attempts of at most 5 minutes each, and three waits of at most 60 s.
+        (Invoke-InTenure { Get-TenureGraphLongestCall }) | Should -Be ([timespan]::FromMinutes(23))
     }
 
     It 'backs off exponentially without Retry-After and gives up with Tenure.Graph.Throttled' {

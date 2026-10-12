@@ -46,7 +46,7 @@ Describe 'No direct SDK calls outside the seams' {
 
     It 'the scanner ignores comments and the seam helpers' {
         @(Get-SdkViolation 'Private/Providers/M.ps1' '# Set-Mailbox is wrapped by Invoke-TenureExchange').Count | Should -Be 0
-        @(Get-SdkViolation 'Private/Providers/M.ps1' "Invoke-TenureExchange -Command 'Set-Mailbox'").Count | Should -Be 1 -Because 'string literals of cmdlet names are expected and reviewed by hand; the scanner only skips comments'
+        @(Get-SdkViolation 'Private/Providers/M.ps1' "Invoke-TenureExchange -Command 'Set-Mailbox'").Count | Should -Be 1 -Because 'a string literal naming a cmdlet still counts; the scanner only skips comments'
     }
 
     It 'the scanner still allows a listed command in its allowed file' {
